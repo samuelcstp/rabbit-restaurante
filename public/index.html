@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restaurante Digital - RabbitMQ Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  
+  <div class="container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="logo">
+          <i class="fa-solid fa-utensils"></i>
+          <span>Restaurante Digital</span>
+        </div>
+        <p class="subtitle">Demonstração de Mensageria com RabbitMQ</p>
+      </div>
+      
+      <div class="header-right">
+        <div class="status-badge" id="status-server">
+          <span class="indicator"></span>
+          <span>Web Server</span>
+        </div>
+        <div class="status-badge" id="status-rabbitmq">
+          <span class="indicator"></span>
+          <span>RabbitMQ</span>
+        </div>
+        <a href="http://localhost:15672" target="_blank" class="btn btn-rabbitmq">
+          <i class="fa-solid fa-gauge-high"></i> Painel RabbitMQ
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="dashboard-grid">
+      
+      <!-- Col 1: Painel de Controle & Teste de Desacoplamento -->
+      <section class="card control-card">
+        <div class="card-header">
+          <i class="fa-solid fa-sliders"></i>
+          <h2>Controle dos Consumidores</h2>
+        </div>
+        
+        <div class="instruction-box">
+          <h3><i class="fa-solid fa-vial"></i> Teste de Desacoplamento</h3>
+          <ol>
+            <li>Desligue os dois consumidores abaixo.</li>
+            <li>Envie 5 pedidos (clique no botão de 5 pedidos).</li>
+            <li>Veja as filas acumularem mensagens no painel RabbitMQ (ou nas caixas abaixo).</li>
+            <li>Ligue os consumidores e assista o processamento em tempo real.</li>
+          </ol>
+        </div>
+
+        <div class="consumers-list">
+          <!-- Consumer Kitchen -->
+          <div class="consumer-row" id="consumer-cozinha-card">
+            <div class="consumer-info">
+              <div class="consumer-title-wrapper">
+                <i class="fa-solid fa-kitchen-set icon-cozinha"></i>
+                <div>
+                  <span class="consumer-name">Cozinha (fila_cozinha)</span>
+                  <div class="consumer-state">Parado</div>
+                </div>
+              </div>
+              <div class="queue-counter">
+                <span class="counter-label">Na Fila</span>
+                <span class="counter-value" id="cozinha-queue-count">0</span>
+              </div>
+            </div>
+            <div class="consumer-actions">
+              <button class="btn btn-toggle" id="btn-toggle-cozinha">
+                Ligar Consumidor
+              </button>
+            </div>
+          </div>
+
+          <!-- Consumer Finance -->
+          <div class="consumer-row" id="consumer-financeiro-card">
+            <div class="consumer-info">
+              <div class="consumer-title-wrapper">
+                <i class="fa-solid fa-file-invoice-dollar icon-financeiro"></i>
+                <div>
+                  <span class="consumer-name">Financeiro (fila_pagamento)</span>
+                  <div class="consumer-state">Parado</div>
+                </div>
+              </div>
+              <div class="queue-counter">
+                <span class="counter-label">Na Fila</span>
+                <span class="counter-value" id="financeiro-queue-count">0</span>
+              </div>
+            </div>
+            <div class="consumer-actions">
+              <button class="btn btn-toggle" id="btn-toggle-financeiro">
+                Ligar Consumidor
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Col 2: Produtor (Gerar Pedidos) -->
+      <section class="card producer-card">
+        <div class="card-header">
+          <i class="fa-solid fa-circle-plus"></i>
+          <h2>Gerador de Pedidos (Produtor)</h2>
+        </div>
+        
+        <form id="order-form" class="order-form">
+          <div class="form-group">
+            <label for="order-item">Prato / Bebida</label>
+            <select id="order-item" required>
+              <option value="Hambúrguer Duplo">🍔 Hambúrguer Duplo</option>
+              <option value="Pizza Margherita">🍕 Pizza Margherita</option>
+              <option value="Batata Frita Grande">🍟 Batata Frita Grande</option>
+              <option value="Refrigerante Lata">🥤 Refrigerante Lata</option>
+              <option value="Milkshake de Chocolate">🍦 Milkshake de Chocolate</option>
+              <option value="Executivo de Frango">🍛 Executivo de Frango</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="order-table">Mesa</label>
+            <input type="number" id="order-table" min="1" max="50" value="5" required>
+          </div>
+          
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fa-solid fa-paper-plane"></i> Enviar Pedido Individual
+          </button>
+        </form>
+        
+        <div class="divider">ou</div>
+        
+        <button id="btn-send-5" class="btn btn-secondary btn-block">
+          <i class="fa-solid fa-bolt"></i> Enviar 5 Pedidos Aleatórios
+        </button>
+      </section>
+
+      <!-- Col 3: Terminal de Logs / Monitor de Atividades -->
+      <section class="card logs-card">
+        <div class="card-header">
+          <i class="fa-solid fa-terminal"></i>
+          <h2>Monitor de Processamento (Logs)</h2>
+          <button class="btn btn-clear-logs" id="btn-clear-logs">
+            Limpar Logs
+          </button>
+        </div>
+        
+        <div class="logs-container">
+          <div class="log-section">
+            <h3><i class="fa-solid fa-kitchen-set text-cozinha"></i> Cozinha (Logs)</h3>
+            <div class="terminal" id="terminal-cozinha">
+              <div class="log-entry system-msg">[Sistema] Aguardando início dos logs da Cozinha...</div>
+            </div>
+          </div>
+          
+          <div class="log-section">
+            <h3><i class="fa-solid fa-file-invoice-dollar text-financeiro"></i> Financeiro (Logs)</h3>
+            <div class="terminal" id="terminal-financeiro">
+              <div class="log-entry system-msg">[Sistema] Aguardando início dos logs do Financeiro...</div>
+            </div>
+          </div>
+
+          <div class="log-section">
+            <h3><i class="fa-solid fa-server text-system"></i> Sistema (Interno)</h3>
+            <div class="terminal" id="terminal-sistema">
+              <div class="log-entry system-msg">[Sistema] Painel inicializado.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
